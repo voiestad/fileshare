@@ -1,2 +1,2 @@
-# file-share
-File sharing website
+# fileshare
+A file sharing website written in Go

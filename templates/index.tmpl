@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>fileshare</title>
+</head>
+
+<body>
+  <h1>fileshare</h1>
+
+  <h2>Available Files</h2>
+  <ul>
+    {{ range .availableFiles }}
+    <li>
+      <a href="/download/{{ .Id }}">{{ .Name }}</a>
+    </li>
+    {{ else }}
+    <li>No files available.</li>
+    {{ end }}
+  </ul>
+</body>
+
+</html>

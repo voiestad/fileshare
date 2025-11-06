@@ -14,7 +14,7 @@
   <ul>
     {{ range .availableFiles }}
     <li>
-      <a href="/download/{{ .Id }}">{{ .Name }}</a>
+      <a href="/download/{{ .Id }}"  download="{{ .Name }}">{{ .Name }}</a>
     </li>
     {{ else }}
     <li>No files available.</li>

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -64,17 +63,8 @@ func getFile(c *gin.Context) {
 		c.String(http.StatusBadRequest, "'file' parameter not within legal range")
 		return
 	}
-	file := availableFiles[fileIdx].Name()
-	content, err := os.ReadFile("files/" + file)
-	if err != nil {
-		c.String(http.StatusNotFound, "Couldn't find the requested file")
-		return
-	}
-	mimeType := mime.TypeByExtension(filepath.Ext(file))
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
+	fileName := availableFiles[fileIdx].Name()
 
-	c.Header("Content-Disposition", "attachment; filename=\""+file+"\"")
-	c.Data(http.StatusOK, mimeType, content)
+	file := filepath.Join("files", fileName)
+	c.File(file)
 }

@@ -17,5 +17,6 @@ go run .
 docker build -t voiestad/fileshare .
 docker run -p 8080:8080 \
   -v $(pwd)/files:/app/files \
+  -v $(pwd)/database:/app/database \
   voiestad/fileshare
 ```

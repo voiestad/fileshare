@@ -12,10 +12,30 @@
   <h1>fileshare</h1>
 
   <h2>Available Files</h2>
+  <script>
+    async function deleteFile(e, id) {
+      e.preventDefault();
+
+      fetch(`/delete/${id}`, {method: "POST"}).then(res => {
+        if (res.ok) {
+            window.location.href = "/";
+        } else {
+          console.error("Server error:", res);
+          alert("Something went wrong!");
+        }
+      }).catch(err => {
+        console.error("Deletion error:", err);
+        alert("Something went wrong!");
+      })
+    }
+  </script>
   <ul>
     {{ range .availableFiles }}
     <li>
       <a href="/download/{{ .Id }}"  download="{{ .Name }}">{{ .Name }}</a>
+      <form onsubmit="deleteFile(event, {{ .Id }})">
+        <input type="submit" value="Delete file">
+      </form>
     </li>
     {{ else }}
     <li>No files available.</li>
@@ -24,7 +44,7 @@
 
   <h2>Upload File</h2>
   <form id="uploadForm">
-    <input type="file" value="Choose file" name="file">
+    <input type="file" name="file">
     <br>
     <input type="submit" value="Upload">
   </form>

@@ -14,7 +14,9 @@ func main() {
 	router.LoadHTMLGlob("templates/*")
 	router.GET("/", index)
 	router.GET("/download/:id", getFile)
+	router.POST("/upload", addFile)
 	router.StaticFile("/favicon.ico", "./static/favicon.ico")
+	router.StaticFile("/style.css", "./static/style.css")
 	router.Run("0.0.0.0:8080")
 }
 
@@ -67,4 +69,18 @@ func getFile(c *gin.Context) {
 
 	file := filepath.Join("files", fileName)
 	c.File(file)
+}
+
+func addFile(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.String(http.StatusBadRequest, "Could not get file: %v", err)
+		return
+	}
+	err = c.SaveUploadedFile(file, filepath.Join("files", file.Filename))
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Error saving file: %v", err)
+		return
+	}
+	c.String(http.StatusOK, "File %v uploaded successfully!", file.Filename)
 }

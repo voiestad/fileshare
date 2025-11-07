@@ -1,11 +1,13 @@
-# fileshare
-A file sharing website written in Go
+# Fileshare
+A file sharing website written in Go.
+
+## DISCLAIMER!
+This program is currently in the early stages of development and is not ready for production usage.
 
 ## Developer
 **Vebjørn Øiestad**
 
 ## Running Application
-
 ```
 go run .
 ```

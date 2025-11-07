@@ -9,15 +9,23 @@
 </head>
 
 <body>
-  <h1>Fileshare</h1>
+  <header>
+    <h1><a href="/">Fileshare</a></h1>
+  </header>
 
   <h2>Upload File</h2>
+  <div id="loader"></div>
   <form id="uploadForm">
     <input type="file" name="file" id="fileInput">
   </form>
   <script>
-    document.getElementById("fileInput").addEventListener("change", async (e) => {
+    const loader = document.getElementById("loader");
+    const fileInput = document.getElementById("fileInput");
+
+    fileInput.addEventListener("change", async (e) => {
       e.preventDefault();
+      loader.style.display = "flex";
+      fileInput.style.display = "none";
 
       const formData = new FormData(document.getElementById("uploadForm"));
       if (!formData.get('file')['name']) {

@@ -33,7 +33,7 @@ func GetFile(id uuid.UUID) *sql.Row {
 }
 
 func GetFiles() (*sql.Rows, error) {
-	return db.Query("SELECT * FROM files")
+	return db.Query("SELECT * FROM files ORDER BY name COLLATE NOCASE")
 }
 
 func AddFile(file *multipart.FileHeader) (uuid.UUID, error) {

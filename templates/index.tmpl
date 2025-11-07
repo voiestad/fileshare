@@ -5,12 +5,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
-  <title>fileshare</title>
+  <title>Fileshare</title>
 </head>
 
 <body>
-  <h1>fileshare</h1>
+  <h1>Fileshare</h1>
 
+  <h2>Upload File</h2>
+  <form id="uploadForm">
+    <input type="file" name="file" id="fileInput">
+  </form>
+  <script>
+    document.getElementById("fileInput").addEventListener("change", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(document.getElementById("uploadForm"));
+      if (!formData.get('file')['name']) {
+        return;
+      }
+      fetch("/upload", {
+          method: "POST",
+          body: formData,
+      }).then(res => {
+        if (res.ok) {
+            window.location.href = "/";
+        } else {
+          console.error("Server error:", res);
+          alert("Something went wrong!");
+        }
+      }).catch(err => {
+        console.error("Upload error:", err);
+        alert("Something went wrong!");
+      })
+    });
+  </script>
   <h2>Available Files</h2>
   <script>
     async function deleteFile(e, id) {
@@ -41,38 +69,6 @@
     <li>No files available.</li>
     {{ end }}
   </ul>
-
-  <h2>Upload File</h2>
-  <form id="uploadForm">
-    <input type="file" name="file">
-    <br>
-    <input type="submit" value="Upload">
-  </form>
-  <script>
-    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(e.target);
-      if (!formData.get('file')['name']) {
-        return;
-      }
-      fetch("/upload", {
-          method: "POST",
-          body: formData,
-      }).then(res => {
-        if (res.ok) {
-            window.location.href = "/";
-        } else {
-          console.error("Server error:", res);
-          alert("Something went wrong!");
-        }
-      }).catch(err => {
-        console.error("Upload error:", err);
-        alert("Something went wrong!");
-      })
-    });
-  </script>
-
 </body>
 
 </html>

@@ -16,3 +16,31 @@ a:hover {
 a:active {
   color: red;
 }
+
+#fileInput {
+  width: 350px;
+  height: 125px;
+  border: 2px dashed #0264d6;
+  display: block;
+  padding: 10px;
+  text-align: center;
+  line-height: 80px;
+  font-size: 16px;
+  color: #0264d6;
+}
+
+#fileInput:active,
+#fileInput:hover,
+#fileInput:focus {
+  background-color: #e1f5fe;
+  box-shadow: 0 0 5px rgba(2, 100, 214, 0.5);
+  outline: none;
+}
+
+::-webkit-file-upload-button {
+  display: none;
+}
+
+::file-selector-button {
+  display: none;
+}

@@ -5,34 +5,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
-  <title>fileshare</title>
+  <title>Fileshare</title>
 </head>
 
 <body>
-  <h1>fileshare</h1>
-
-  <h2>Available Files</h2>
-  <ul>
-    {{ range .availableFiles }}
-    <li>
-      <a href="/download/{{ .Id }}"  download="{{ .Name }}">{{ .Name }}</a>
-    </li>
-    {{ else }}
-    <li>No files available.</li>
-    {{ end }}
-  </ul>
+  <header>
+    <h1><a href="/">Fileshare</a></h1>
+  </header>
 
   <h2>Upload File</h2>
+  <div id="loader"></div>
   <form id="uploadForm">
-    <input type="file" value="Choose file" name="file">
-    <br>
-    <input type="submit" value="Upload">
+    <input type="file" name="file" id="fileInput">
   </form>
   <script>
-    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+    const loader = document.getElementById("loader");
+    const fileInput = document.getElementById("fileInput");
 
-      const formData = new FormData(e.target);
+    fileInput.addEventListener("change", async (e) => {
+      e.preventDefault();
+      loader.style.display = "flex";
+      fileInput.style.display = "none";
+
+      const formData = new FormData(document.getElementById("uploadForm"));
       if (!formData.get('file')['name']) {
         return;
       }
@@ -52,7 +47,36 @@
       })
     });
   </script>
+  <h2>Available Files</h2>
+  <script>
+    async function deleteFile(e, id) {
+      e.preventDefault();
 
+      fetch(`/delete/${id}`, {method: "POST"}).then(res => {
+        if (res.ok) {
+            window.location.href = "/";
+        } else {
+          console.error("Server error:", res);
+          alert("Something went wrong!");
+        }
+      }).catch(err => {
+        console.error("Deletion error:", err);
+        alert("Something went wrong!");
+      })
+    }
+  </script>
+  <ul>
+    {{ range .availableFiles }}
+    <li>
+      <a href="/download/{{ .Id }}"  download="{{ .Name }}">{{ .Name }}</a>
+      <form onsubmit="deleteFile(event, {{ .Id }})">
+        <input type="submit" value="Delete file">
+      </form>
+    </li>
+    {{ else }}
+    <li>No files available.</li>
+    {{ end }}
+  </ul>
 </body>
 
 </html>

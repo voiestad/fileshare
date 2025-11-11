@@ -1,20 +1,30 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/voiestad/fileshare/internal/database"
 )
 
+var fileDirName string = "files"
+
 func main() {
+	os.Mkdir(fileDirName, 0775)
+	err := database.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*")
 	router.GET("/", index)
 	router.GET("/download/:id", getFile)
 	router.POST("/upload", addFile)
+	router.POST("/delete/:id", deleteFile)
 	router.StaticFile("/favicon.ico", "./static/favicon.ico")
 	router.StaticFile("/style.css", "./static/style.css")
 	router.Run("0.0.0.0:8080")
@@ -30,18 +40,29 @@ func index(c *gin.Context) {
 
 type File struct {
 	Name string
-	Id   int
+	Id   uuid.UUID
 }
 
 func getAvailableFiles() ([]File, error) {
-	availableFiles, err := os.ReadDir("files")
+	availableFiles, err := database.GetFiles()
 	if err != nil {
 		return make([]File, 0), err
 	}
-	files := make([]File, len(availableFiles))
-	for i, file := range availableFiles {
-		files[i] = File{Name: file.Name(), Id: i}
+	files := make([]File, 0)
+	for availableFiles.Next() {
+		var id, name, time string
+		if err := availableFiles.Scan(&id, &name, &time); err != nil {
+			log.Println("scan error:", err)
+			continue
+		}
+		parsedId, err := uuid.Parse(id)
+		if err != nil {
+			log.Println("scan error:", err)
+			continue
+		}
+		files = append(files, File{Name: name, Id: parsedId})
 	}
+	availableFiles.Close()
 	return files, nil
 }
 
@@ -51,23 +72,19 @@ func getFile(c *gin.Context) {
 		c.String(http.StatusBadRequest, "Missing 'file' parameter")
 		return
 	}
-	fileIdx, err := strconv.Atoi(inputFile)
+	id, err := uuid.Parse(inputFile)
 	if err != nil {
-		c.String(http.StatusBadRequest, "'file' parameter should be an integer")
+		c.String(http.StatusBadRequest, "'file' parameter should be a valid UUID")
 		return
 	}
-	availableFiles, err := os.ReadDir("files")
+	res := database.GetFile(id)
+	var fileName string
+	err = res.Scan(&fileName)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Could not load the files")
+		c.String(http.StatusNotFound, "Could not find file")
 		return
 	}
-	if fileIdx < 0 || fileIdx >= len(availableFiles) {
-		c.String(http.StatusBadRequest, "'file' parameter not within legal range")
-		return
-	}
-	fileName := availableFiles[fileIdx].Name()
-
-	file := filepath.Join("files", fileName)
+	file := filepath.Join(fileDirName, id.String())
 	c.File(file)
 }
 
@@ -77,10 +94,37 @@ func addFile(c *gin.Context) {
 		c.String(http.StatusBadRequest, "Could not get file: %v", err)
 		return
 	}
-	err = c.SaveUploadedFile(file, filepath.Join("files", file.Filename))
+	id, err := database.AddFile(file)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Error saving file: %v", err)
 		return
 	}
+	err = c.SaveUploadedFile(file, filepath.Join(fileDirName, id.String()))
+	if err != nil {
+		database.RemoveFile(id)
+		c.String(http.StatusInternalServerError, "Error saving file: %v", err)
+		return
+	}
 	c.String(http.StatusOK, "File %v uploaded successfully!", file.Filename)
+}
+
+func deleteFile(c *gin.Context) {
+	inputFile := c.Param("id")
+	if inputFile == "" {
+		c.String(http.StatusBadRequest, "Missing 'file' parameter")
+		return
+	}
+	id, err := uuid.Parse(inputFile)
+	if err != nil {
+		c.String(http.StatusBadRequest, "'file' parameter should be a valid UUID")
+		return
+	}
+	file := filepath.Join(fileDirName, id.String())
+	err = os.Remove(file)
+	if err != nil {
+		c.String(http.StatusBadRequest, "File could not be deleted")
+		return
+	}
+	database.RemoveFile(id)
+	c.String(http.StatusOK, "File deleted successfully!")
 }

@@ -1,0 +1,10 @@
+services:
+  fileshare:
+    container_name: fileshare
+    build: .
+    ports:
+      - "8086:8080"
+    volumes:
+      - ./files:/app/files
+      - ./database:/app/database
+    restart: always

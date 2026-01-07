@@ -23,7 +23,7 @@ func main() {
 	router.LoadHTMLGlob("templates/*")
 	router.GET("/", index)
 	router.GET("/download/:id", getFile)
-	router.POST("/upload", addFile)
+	router.POST("/upload", addFiles)
 	router.POST("/delete/:id", deleteFile)
 	router.StaticFile("/favicon.ico", "./static/favicon.ico")
 	router.StaticFile("/style.css", "./static/style.css")
@@ -88,24 +88,35 @@ func getFile(c *gin.Context) {
 	c.File(file)
 }
 
-func addFile(c *gin.Context) {
-	file, err := c.FormFile("file")
+type AddFilesResponse struct {
+	Success []string `json:"success"`
+	Failed  []string `json:"failed"`
+}
+
+func addFiles(c *gin.Context) {
+	form, err := c.MultipartForm()
+	files := form.File["files"]
+	success := make([]string, 0)
+	failed := make([]string, 0)
 	if err != nil {
 		c.String(http.StatusBadRequest, "Could not get file: %v", err)
 		return
 	}
-	id, err := database.AddFile(file)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error saving file: %v", err)
-		return
+	for _, file := range files {
+		id, err := database.AddFile(file)
+		if err != nil {
+			failed = append(failed, file.Filename)
+			continue
+		}
+		err = c.SaveUploadedFile(file, filepath.Join(fileDirName, id.String()))
+		if err != nil {
+			database.RemoveFile(id)
+			failed = append(failed, file.Filename)
+			continue
+		}
+		success = append(success, file.Filename)
 	}
-	err = c.SaveUploadedFile(file, filepath.Join(fileDirName, id.String()))
-	if err != nil {
-		database.RemoveFile(id)
-		c.String(http.StatusInternalServerError, "Error saving file: %v", err)
-		return
-	}
-	c.String(http.StatusOK, "File %v uploaded successfully!", file.Filename)
+	c.JSON(http.StatusOK, AddFilesResponse{Success: success, Failed: failed})
 }
 
 func deleteFile(c *gin.Context) {

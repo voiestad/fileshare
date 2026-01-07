@@ -16,7 +16,7 @@
   <h2>Upload File</h2>
   <div id="loader"></div>
   <form id="uploadForm">
-    <input type="file" name="file" id="fileInput">
+    <input type="file" name="files" id="fileInput" multiple>
   </form>
   <script>
     const loader = document.getElementById("loader");
@@ -28,14 +28,19 @@
       fileInput.style.display = "none";
 
       const formData = new FormData(document.getElementById("uploadForm"));
-      if (!formData.get('file')['name']) {
-        return;
-      }
       fetch("/upload", {
           method: "POST",
           body: formData,
       }).then(res => {
         if (res.ok) {
+            res.json()
+              .then(json => {
+                const success = (json.success.length ? "Successfully uploaded:\n" : "") + json.success.join('\n')
+                const failed = (json.failed.length ? "Failed to upload:\n" : "") + json.failed.join('\n')
+                const message = [success, failed].join('\n');
+                alert(message)
+              })
+              .catch(err => console.error(err))
             window.location.href = "/";
         } else {
           console.error("Server error:", res);
@@ -51,7 +56,9 @@
   <script>
     async function deleteFile(e, id) {
       e.preventDefault();
-
+      if (!confirm("Are you sure you want to delete this file?")) {
+        return;
+      }
       fetch(`/delete/${id}`, {method: "POST"}).then(res => {
         if (res.ok) {
             window.location.href = "/";
